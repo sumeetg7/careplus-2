@@ -1,0 +1,7 @@
+{
+  "name": "CarePlus Hospital Management System",
+  "description": "Modern hospital doctor consultation, diagnostic booking, and real-time live queue and token tracking platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
