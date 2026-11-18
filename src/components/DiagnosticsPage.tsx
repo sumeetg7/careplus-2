@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { DiagnosticService } from '../types';
 import { DIAGNOSTIC_IMAGE } from '../data/initialData';
+import { translateDiagnosticCategory } from '../i18n';
+import { motion } from 'motion/react';
+import { APPLE_EASE, RevealSection, StaggerGrid, StaggerCard } from './MotionPrimitives';
+import { resolveHospitalAssetUrl } from './DoctorAvatar';
 import {
   Search,
   Clock,
   FileText,
-  AlertCircle,
   CheckCircle2,
-  DollarSign,
-  Calendar,
-  Sparkles,
   Info,
   MapPin,
-  Activity,
   Droplet,
   Layers,
 } from 'lucide-react';
@@ -26,15 +26,19 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
   diagnostics,
   onBookService,
 }) => {
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState<'All' | 'Radiology' | 'Pathology'>('All');
+  const [bannerImgError, setBannerImgError] = useState(false);
 
   const filtered = diagnostics.filter((diag) => {
     const matchCat = activeCategory === 'All' || diag.category === activeCategory;
+    const q = searchQuery.toLowerCase();
     const matchSearch =
-      diag.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      diag.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      diag.category.toLowerCase().includes(searchQuery.toLowerCase());
+      diag.name.toLowerCase().includes(q) ||
+      diag.description.toLowerCase().includes(q) ||
+      diag.category.toLowerCase().includes(q) ||
+      translateDiagnosticCategory(t, diag.category).toLowerCase().includes(q);
     return matchCat && matchSearch;
   });
 
@@ -46,85 +50,107 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-10 animate-page-enter">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-teal-950 text-white rounded-3xl overflow-hidden relative border border-slate-800 shadow-xl">
-        <div className="absolute inset-0 z-0">
-          <img
-            src={DIAGNOSTIC_IMAGE}
-            alt="CarePlus Diagnostic Center"
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover opacity-20"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-slate-900/60" />
-        </div>
+      <RevealSection direction="up">
+        <div className="bg-gradient-to-r from-slate-950 via-slate-900 to-teal-950 text-white rounded-3xl overflow-hidden relative border border-slate-800 shadow-xl">
+          <div className="absolute inset-0 z-0 overflow-hidden">
+            {!bannerImgError && (
+              <motion.img
+                initial={{ scale: 1.07, opacity: 0.12 }}
+                animate={{ scale: 1, opacity: 0.22 }}
+                transition={{ duration: 1.1, ease: APPLE_EASE }}
+                src={resolveHospitalAssetUrl(DIAGNOSTIC_IMAGE)}
+                alt="SmartCare Diagnostic Center"
+                referrerPolicy="no-referrer"
+                onError={() => setBannerImgError(true)}
+                className="w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-900/90 to-slate-900/60" />
+          </div>
 
-        <div className="relative z-10 p-6 sm:p-10 max-w-3xl space-y-4">
-          <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">
-            Diagnostic &amp; Imaging Wing
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
-            Diagnostic &amp; Pathology Services
-          </h1>
-          <p className="text-sm text-slate-300 leading-relaxed font-normal">
-            Precision clinical diagnostics powered by 1.5 Tesla MRI, multi-detector CT, digital X-Ray, ultrasound, and automated central pathology lab. Clear test preparation instructions and estimated reporting times provided upfront.
-          </p>
-          <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2">
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-teal-400" />
-              NABL Standard Protocols
+          <div className="relative z-10 p-6 sm:p-10 max-w-3xl space-y-4">
+            <span className="text-xs font-bold text-teal-400 uppercase tracking-wider">
+              {t('diagnostics.eyebrow')}
             </span>
-            <span>·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-teal-400" />
-              Transparent Demo Rates
-            </span>
-            <span>·</span>
-            <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-teal-400" />
-              Same-day Digital Delivery
-            </span>
+            <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+              {t('diagnostics.title')}
+            </h1>
+            <p className="text-sm text-slate-300 leading-relaxed font-normal">
+              {t('diagnostics.subtitle')}
+            </p>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-300 pt-2">
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                {t('diagnostics.highlight1')}
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                {t('diagnostics.highlight2')}
+              </span>
+              <span>·</span>
+              <span className="flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-teal-400 shrink-0" />
+                {t('diagnostics.highlight3')}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </RevealSection>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col md:flex-row gap-4 items-center justify-between shadow-xs">
-        {/* Search */}
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Search scans, blood tests, X-rays..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white transition-all"
-          />
-        </div>
+      <RevealSection direction="up" delay={0.05}>
+        <div className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col md:flex-row gap-4 items-center justify-between shadow-xs">
+          {/* Search */}
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder={t('diagnostics.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:bg-white focus:shadow-sm transition-all"
+            />
+          </div>
 
-        {/* Category Filter */}
-        <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl w-full md:w-auto overflow-x-auto">
-          {(['All', 'Radiology', 'Pathology'] as const).map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 cursor-pointer ${
-                activeCategory === cat
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {cat === 'All' ? 'All Services' : cat}
-            </button>
-          ))}
+          {/* Category Filter */}
+          <div className="flex items-center gap-1.5 bg-slate-100 p-1.5 rounded-xl w-full md:w-auto overflow-x-auto">
+            {(['All', 'Radiology', 'Pathology'] as const).map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`relative px-4 py-2 text-xs font-bold rounded-lg transition-colors duration-200 cursor-pointer whitespace-nowrap ${
+                  activeCategory === cat
+                    ? 'text-slate-900'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {activeCategory === cat && (
+                  <motion.span
+                    layoutId="diag-cat-pill"
+                    transition={{ type: 'spring', stiffness: 360, damping: 30 }}
+                    className="absolute inset-0 bg-white rounded-lg shadow-sm"
+                  />
+                )}
+                <span className="relative z-10">{translateDiagnosticCategory(t, cat)}</span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      </RevealSection>
 
       {/* Diagnostics Cards Grid with Lift & Hover */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <StaggerGrid
+        immediate
+        key={`${activeCategory}-${searchQuery}`}
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+      >
         {filtered.map((diag) => (
-          <div
+          <StaggerCard
             key={diag.id}
+            enableTilt
             className="group bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between card-hover-effect relative overflow-hidden"
           >
             {/* Top gradient highlight on hover */}
@@ -137,11 +163,11 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
                     {getServiceIcon(diag.category)}
                   </div>
                   <span className="text-xs font-bold text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md">
-                    {diag.category}
+                    {translateDiagnosticCategory(t, diag.category)}
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400 block uppercase font-bold">Approx. Fee</span>
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold">{t('diagnostics.approxFee')}</span>
                   <span className="text-xl font-bold font-mono text-slate-900">
                     ₹{diag.approxFee}
                   </span>
@@ -161,7 +187,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 flex items-center gap-1.5">
                     <Clock className="w-3.5 h-3.5 text-slate-400" />
-                    Test Duration:
+                    {t('diagnostics.testDuration')}
                   </span>
                   <span className="font-semibold text-slate-800">{diag.duration}</span>
                 </div>
@@ -169,7 +195,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-slate-400" />
-                    Report Delivery:
+                    {t('diagnostics.reportDelivery')}
                   </span>
                   <span className="font-semibold text-slate-800">{diag.reportDeliveryTime}</span>
                 </div>
@@ -177,7 +203,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
                 <div className="flex items-center justify-between">
                   <span className="text-slate-500 flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    Room:
+                    {t('diagnostics.roomLabel')}
                   </span>
                   <span className="text-slate-700 truncate max-w-[150px]">{diag.roomNumber}</span>
                 </div>
@@ -187,7 +213,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
               <div className="text-xs text-slate-600 space-y-1">
                 <div className="flex items-center gap-1 text-[11px] font-bold text-slate-700 uppercase tracking-wide">
                   <Info className="w-3 h-3 text-teal-600" />
-                  Preparation Note:
+                  {t('diagnostics.preparationNote')}
                 </div>
                 <p className="text-[11px] text-slate-500 leading-normal line-clamp-2">
                   {diag.preparationInstructions}
@@ -197,7 +223,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
               {/* Available Slots Preview */}
               <div>
                 <span className="text-[11px] font-semibold text-slate-400 block mb-1.5">
-                  Available Slots Today:
+                  {t('diagnostics.availableSlotsToday')}
                 </span>
                 <div className="flex flex-wrap gap-1">
                   {diag.availableSlots.slice(0, 3).map((slot) => (
@@ -210,7 +236,7 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
                   ))}
                   {diag.availableSlots.length > 3 && (
                     <span className="px-1.5 py-0.5 text-slate-400 text-[10px]">
-                      +{diag.availableSlots.length - 3} more
+                      {t('diagnostics.moreSlots', { count: diag.availableSlots.length - 3 })}
                     </span>
                   )}
                 </div>
@@ -218,20 +244,22 @@ export const DiagnosticsPage: React.FC<DiagnosticsPageProps> = ({
             </div>
 
             <div className="pt-4 mt-4 border-t border-slate-100">
-              <button
+              <motion.button
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => onBookService(diag)}
-                className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer text-center"
+                className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer text-center"
               >
-                Book Service Slot
-              </button>
+                {t('diagnostics.bookServiceSlot')}
+              </motion.button>
             </div>
-          </div>
+          </StaggerCard>
         ))}
-      </div>
+      </StaggerGrid>
 
       {filtered.length === 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center text-sm text-slate-500">
-          No diagnostic services found for your query. Try clearing the search or category filter.
+          {t('diagnostics.empty')}
         </div>
       )}
     </div>
